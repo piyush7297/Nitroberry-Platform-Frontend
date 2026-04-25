@@ -128,9 +128,11 @@ export const authOptions: NextAuthOptions = {
             );
 
             console.log(
-              "[Auth] Login response:",
+              "[Auth] Login response (sanitized):",
               sanitizeLoginResponse(res?.data),
             );
+
+
             console.log(
               "[Auth] Theme data from login response:",
               extractThemeData(res?.data),

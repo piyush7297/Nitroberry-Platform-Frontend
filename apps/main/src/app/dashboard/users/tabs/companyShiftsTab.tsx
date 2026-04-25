@@ -45,40 +45,28 @@ import { ConfirmationModal } from "@/components/models/confirmationModal";
 import { Pagination } from "../pagination";
 import { Switch } from "@/components/ui/switch";
 
+// dayOfWeek: 0=Sunday, 1=Monday, ..., 6=Saturday
 const DAYS_OF_WEEK = [
-  "monday",
-  "tuesday",
-  "wednesday",
-  "thursday",
-  "friday",
-  "saturday",
-  "sunday",
+  { label: "Sunday",    dayOfWeek: 0 },
+  { label: "Monday",    dayOfWeek: 1 },
+  { label: "Tuesday",   dayOfWeek: 2 },
+  { label: "Wednesday", dayOfWeek: 3 },
+  { label: "Thursday",  dayOfWeek: 4 },
+  { label: "Friday",    dayOfWeek: 5 },
+  { label: "Saturday",  dayOfWeek: 6 },
 ] as const;
 
-const TIMEZONES = [
-  "UTC",
-  "America/New_York",
-  "America/Chicago",
-  "America/Denver",
-  "America/Los_Angeles",
-  "Europe/London",
-  "Europe/Paris",
-  "Asia/Tokyo",
-  "Asia/Shanghai",
-  "Australia/Sydney",
-];
-
 interface DayConfig {
-  day: string;
-  start: string;
-  end: string;
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
   isClosed: boolean;
 }
 
 interface Shift {
   id: string;
   name: string;
-  timezone: string;
+  calendarId?: string;
   dayConfig: DayConfig[];
   createdAt?: string;
   updatedAt?: string;
@@ -89,11 +77,13 @@ export function CompanyShiftsTab({
   refreshSignal = 0,
   searchTerm = "",
   locationId = "",
+  calendarId = "",
 }: {
   createSignal?: number;
   refreshSignal?: number;
   searchTerm?: string;
   locationId?: string;
+  calendarId?: string;
 }) {
   const [activeModal, setActiveModal] = useState<{
     type: "create" | "edit" | "delete" | null;
@@ -106,19 +96,17 @@ export function CompanyShiftsTab({
   // Form state
   const [formData, setFormData] = useState({
     name: "",
-    timezone: "UTC",
-    dayConfig: DAYS_OF_WEEK.map((day) => ({
-      day,
-      start: "09:00",
-      end: "20:00",
+    dayConfig: DAYS_OF_WEEK.map(({ dayOfWeek }) => ({
+      dayOfWeek,
+      startTime: "09:00",
+      endTime: "20:00",
       isClosed: false,
     })) as DayConfig[],
   });
 
   const shiftsQuery = new URLSearchParams({
     start: String(start),
-    limit: String(limit),
-    ...(locationId ? { locationId: String(locationId) } : {}),
+    ...(locationId ? { locationId } : {}),
   }).toString();
 
   // API queries and mutations
@@ -165,39 +153,20 @@ export function CompanyShiftsTab({
     });
   }, [shifts, trimmedSearch]);
 
-  // Helper function to normalize dayConfig - ensures all 7 days are present
-  const normalizeDayConfig = (
-    existingDayConfig: DayConfig[] = [],
-  ): DayConfig[] => {
-    return DAYS_OF_WEEK.map((day) => {
-      const existing = existingDayConfig.find((d) => d.day === day);
-      if (existing) {
-        return existing;
-      }
-      // Default values for missing days
-      return {
-        day,
-        start: "09:00",
-        end: "20:00",
-        isClosed: false,
-      };
+  const normalizeDayConfig = (existingDayConfig: DayConfig[] = []): DayConfig[] => {
+    return DAYS_OF_WEEK.map(({ dayOfWeek }) => {
+      const existing = existingDayConfig.find((d) => d.dayOfWeek === dayOfWeek);
+      if (existing) return existing;
+      return { dayOfWeek, startTime: "09:00", endTime: "20:00", isClosed: false };
     });
   };
 
   const openModal = (type: "create" | "edit" | "delete", shift?: Shift) => {
     if (type === "create") {
-      setFormData({
-        name: "",
-        timezone: "UTC",
-        dayConfig: normalizeDayConfig(),
-      });
+      setFormData({ name: "", dayConfig: normalizeDayConfig() });
       setActiveModal({ type, shift: null });
     } else if (type === "edit" && shift) {
-      setFormData({
-        name: shift.name,
-        timezone: shift.timezone,
-        dayConfig: normalizeDayConfig(shift.dayConfig),
-      });
+      setFormData({ name: shift.name, dayConfig: normalizeDayConfig(shift.dayConfig) });
       setActiveModal({ type, shift });
     } else if (type === "delete" && shift) {
       setActiveModal({ type, shift });
@@ -226,24 +195,17 @@ export function CompanyShiftsTab({
 
   const closeModal = () => {
     setActiveModal({ type: null, shift: null });
-    setFormData({
-      name: "",
-      timezone: "UTC",
-      dayConfig: normalizeDayConfig(),
-    });
+    setFormData({ name: "", dayConfig: normalizeDayConfig() });
   };
 
   const handleSubmit = () => {
     if (!formData.name.trim()) return;
 
     setLoading(true);
-    // Ensure dayConfig is normalized before sending (all 7 days present)
-    const normalizedDayConfig = normalizeDayConfig(formData.dayConfig);
     const payload = {
       name: formData.name.trim(),
-      timezone: formData.timezone,
-      dayConfig: normalizedDayConfig,
-      ...(locationId ? { locationId } : {}),
+      dayConfig: normalizeDayConfig(formData.dayConfig),
+      ...(calendarId ? { calendarId } : {}),
     };
 
     if (activeModal.type === "create") {
@@ -292,33 +254,13 @@ export function CompanyShiftsTab({
     });
   };
 
-  const updateDayConfig = (day: string, field: keyof DayConfig, value: any) => {
+  const updateDayConfig = (dayOfWeek: number, field: keyof DayConfig, value: any) => {
     setFormData((prev) => {
-      const newDayConfig = [...prev.dayConfig];
-      const dayIndex = newDayConfig.findIndex((d) => d.day === day);
-
-      if (dayIndex >= 0) {
-        // Update existing day config
-        newDayConfig[dayIndex] = { ...newDayConfig[dayIndex], [field]: value };
-      } else {
-        // Add new day config if it doesn't exist
-        const dayConfig: DayConfig = {
-          day,
-          start: "09:00",
-          end: "20:00",
-          isClosed: false,
-          [field]: value,
-        };
-        newDayConfig.push(dayConfig);
-      }
-
-      // Ensure all days are present and in correct order
+      const newDayConfig = prev.dayConfig.map((d) =>
+        d.dayOfWeek === dayOfWeek ? { ...d, [field]: value } : d,
+      );
       return { ...prev, dayConfig: normalizeDayConfig(newDayConfig) };
     });
-  };
-
-  const formatDayName = (day: string) => {
-    return day.charAt(0).toUpperCase() + day.slice(1);
   };
 
   return (
@@ -374,7 +316,6 @@ export function CompanyShiftsTab({
             <TableHeader className="bg-gray-100">
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Timezone</TableHead>
                 <TableHead>Created At</TableHead>
                 <TableHead>Updated At</TableHead>
                 <TableHead></TableHead>
@@ -384,7 +325,6 @@ export function CompanyShiftsTab({
               {filteredShifts.map((shift: Shift) => (
                 <TableRow key={shift.id} className="hover:bg-gray-50">
                   <TableCell className="font-medium">{shift.name}</TableCell>
-                  <TableCell>{shift.timezone}</TableCell>
                   <TableCell>
                     {shift.createdAt
                       ? new Date(shift.createdAt).toLocaleDateString()
@@ -483,28 +423,6 @@ export function CompanyShiftsTab({
                 />
               </div>
 
-              <div className="space-y-2.5">
-                <Label htmlFor="timezone" className="text-xs font-bold uppercase tracking-wider text-gray-500">
-                  Timezone <span className="text-red-500">*</span>
-                </Label>
-                <Select
-                  value={formData.timezone}
-                  onValueChange={(value) =>
-                    setFormData((prev) => ({ ...prev, timezone: value }))
-                  }
-                >
-                  <SelectTrigger className="w-full bg-white border-gray-200">
-                    <SelectValue placeholder="Select timezone" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TIMEZONES.map((tz) => (
-                      <SelectItem key={tz} value={tz}>
-                        {tz}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
 
             {/* Day Configuration Box */}
@@ -515,32 +433,28 @@ export function CompanyShiftsTab({
               </div>
 
               <div className="space-y-3">
-                {DAYS_OF_WEEK.map((day) => {
-                  const dayConfig = formData.dayConfig.find(
-                    (d) => d.day === day,
-                  ) || {
-                    day,
-                    start: "09:00",
-                    end: "20:00",
+                {DAYS_OF_WEEK.map(({ label, dayOfWeek }) => {
+                  const dayConfig = formData.dayConfig.find((d) => d.dayOfWeek === dayOfWeek) || {
+                    dayOfWeek,
+                    startTime: "09:00",
+                    endTime: "20:00",
                     isClosed: false,
                   };
                   return (
                     <div
-                      key={day}
+                      key={dayOfWeek}
                       className="group flex flex-col gap-3 p-4 bg-white border border-gray-100 rounded-lg shadow-sm hover:border-primary/30 transition-all"
                     >
                       <div className="flex items-center justify-between">
-                        <Label className="font-bold text-sm text-gray-700">
-                          {formatDayName(day)}
-                        </Label>
+                        <Label className="font-bold text-sm text-gray-700">{label}</Label>
                         <div className="flex items-center gap-3">
-                          <span className={`text-[10px] font-bold uppercase ${dayConfig.isClosed ? 'text-red-500' : 'text-emerald-600'}`}>
+                          <span className={`text-[10px] font-bold uppercase ${dayConfig.isClosed ? "text-red-500" : "text-emerald-600"}`}>
                             {dayConfig.isClosed ? "Closed" : "Open"}
                           </span>
                           <Switch
                             checked={!dayConfig.isClosed}
                             onCheckedChange={(checked) =>
-                              updateDayConfig(day, "isClosed", !checked)
+                              updateDayConfig(dayOfWeek, "isClosed", !checked)
                             }
                             className="data-[state=checked]:bg-emerald-500"
                           />
@@ -550,17 +464,15 @@ export function CompanyShiftsTab({
                       {!dayConfig.isClosed && (
                         <div className="grid grid-cols-2 gap-4 pt-1 animate-in fade-in slide-in-from-top-1 duration-200">
                           <div className="space-y-1.5">
-                            <Label htmlFor={`start-${day}`} className="text-[10px] font-medium text-gray-500 uppercase">
+                            <Label htmlFor={`start-${dayOfWeek}`} className="text-[10px] font-medium text-gray-500 uppercase">
                               Start Time
                             </Label>
                             <div className="relative">
                               <Input
-                                id={`start-${day}`}
+                                id={`start-${dayOfWeek}`}
                                 type="time"
-                                value={dayConfig.start}
-                                onChange={(e) =>
-                                  updateDayConfig(day, "start", e.target.value)
-                                }
+                                value={dayConfig.startTime}
+                                onChange={(e) => updateDayConfig(dayOfWeek, "startTime", e.target.value)}
                                 className="w-full h-9 pl-8 pr-2 text-xs border-gray-200 focus:ring-1 focus:ring-primary/20"
                               />
                               <Clock className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
@@ -568,17 +480,15 @@ export function CompanyShiftsTab({
                           </div>
 
                           <div className="space-y-1.5">
-                            <Label htmlFor={`end-${day}`} className="text-[10px] font-medium text-gray-500 uppercase">
+                            <Label htmlFor={`end-${dayOfWeek}`} className="text-[10px] font-medium text-gray-500 uppercase">
                               End Time
                             </Label>
                             <div className="relative">
                               <Input
-                                id={`end-${day}`}
+                                id={`end-${dayOfWeek}`}
                                 type="time"
-                                value={dayConfig.end}
-                                onChange={(e) =>
-                                  updateDayConfig(day, "end", e.target.value)
-                                }
+                                value={dayConfig.endTime}
+                                onChange={(e) => updateDayConfig(dayOfWeek, "endTime", e.target.value)}
                                 className="w-full h-9 pl-8 pr-2 text-xs border-gray-200 focus:ring-1 focus:ring-primary/20"
                               />
                               <Clock className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />

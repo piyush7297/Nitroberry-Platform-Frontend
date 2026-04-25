@@ -1,15 +1,16 @@
 import "../globals.css";
+import { Suspense } from "react";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "../api/auth/[...nextauth]/route";
 import {
   SidebarInset,
   SidebarProvider,
-  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import Link from "next/link";
+import { GlobalHeader } from "@/components/global-header";
 import { DashboardModeProvider } from "@/context/dashboard-mode-context";
+import { ClientProviders } from "@/components/client-providers";
 import { NotificationPermission } from "@/components/NotificationPermission";
 import { PermissionGuard } from "@/components/PermissionGuard";
 import { CompanyThemeApplier } from "@/components/company-theme-applier";
@@ -27,32 +28,31 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div>
-      <DashboardModeProvider>
-        <PermissionsProvider>
+    <DashboardModeProvider>
+      <PermissionsProvider>
+        <ClientProviders>
           <SidebarProvider>
-            <AppSidebar />
-            <SidebarInset>
+            {/* Product-scoped sidebar — Suspense needed for useSearchParams inside */}
+            <Suspense fallback={null}>
+              <AppSidebar />
+            </Suspense>
+
+            <SidebarInset className="min-h-svh">
               <CompanyThemeApplier />
               <NotificationPermission />
               <PermissionGuard />
-              <header className="flex h-12 items-center justify-between px-4 md:hidden">
-                <SidebarTrigger className="text-gray-700" />
-                <Link href="/dashboard" className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center">
-                    <img
-                      src="/images/nitro-fms-logo.jpeg"
-                      alt="Logo"
-                      className="w-10 h-10 object-contain"
-                    />
-                  </div>
-                </Link>
-              </header>
-              {children}
+
+              {/* Persistent global header */}
+              <GlobalHeader />
+
+              {/* Page content */}
+              <main className="flex flex-1 flex-col">
+                {children}
+              </main>
             </SidebarInset>
           </SidebarProvider>
-        </PermissionsProvider>
-      </DashboardModeProvider>
-    </div>
+        </ClientProviders>
+      </PermissionsProvider>
+    </DashboardModeProvider>
   );
 }

@@ -37,8 +37,8 @@ export const NotificationPermission = () => {
                 payload.notification.title || "New Notification";
               const notificationOptions: NotificationOptions = {
                 body: payload.notification.body,
-                icon: payload.notification.icon || "/images/fms-logo.svg",
-                badge: "/images/fms-logo.svg",
+                icon: payload.notification.icon || "/images/nitroberry-logo.png",
+                badge: "/images/nitroberry-logo.png",
                 tag: payload.messageId,
                 requireInteraction: false,
                 data: {

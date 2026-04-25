@@ -78,10 +78,12 @@ export const HolidaysTab: React.FC<{
   refreshSignal?: number;
   searchTerm?: string;
   locationId?: string;
-}> = ({ createSignal, refreshSignal = 0, searchTerm = "", locationId = "" }) => {
+  calendarId?: string;
+}> = ({ createSignal, refreshSignal = 0, searchTerm = "", locationId = "", calendarId = "" }) => {
   const [name, setName] = useState("");
   const [holidayDate, setHolidayDate] = useState("");
-  const [type, setType] = useState<HOLIDAY_SCOPE>(HOLIDAY_SCOPE.PUBLIC);
+  const [durationType, setDurationType] = useState(1);
+  const [scope, setScope] = useState<HOLIDAY_SCOPE>(HOLIDAY_SCOPE.PUBLIC);
   const [loading, setLoading] = useState(false);
   const [statusLoading, setStatusLoading] = useState(false);
   const [modalState, setModalState] = useState<{
@@ -123,23 +125,45 @@ export const HolidaysTab: React.FC<{
   );
   const updateStatus = useStatusMutation(
     HTTP_METHODS.PATCH,
-    ({ id }) => `${API_ENDPOINTS.COMPANY_HOLIDAY}/${id}/status`,
+    ({ id }: { id: string }) => API_ENDPOINTS.COMPANY_HOLIDAY_STATUS(id),
+  );
+  const cancelHoliday = useStatusMutation(
+    HTTP_METHODS.PATCH,
+    ({ id }: { id: string }) => API_ENDPOINTS.COMPANY_HOLIDAY_CANCEL(id),
   );
 
   const { create: canCreate } = useModulePermissions(20);
 
+  // Fetch calendar list to populate selector and provide calendarId
+  const { data: calendarData } = useApiQuery(
+    ["Calendars"],
+    API_ENDPOINTS.COMPANY_CALENDAR,
+    { refetchOnWindowFocus: false, retry: 1 } as const,
+  );
+  const calendars: any[] = calendarData?.data?.calendars || calendarData?.data || [];
+
+  const [selectedCalendarId, setSelectedCalendarId] = useState(calendarId);
+
+  // Auto-select first calendar once list loads
+  useEffect(() => {
+    if (!selectedCalendarId && calendars.length > 0) {
+      setSelectedCalendarId(calendars[0].id);
+    }
+  }, [calendars, selectedCalendarId]);
+
+  const activeCalendarId = selectedCalendarId || calendarId;
+
   const holidayQuery = new URLSearchParams({
-    start: String(start),
-    limit: String(limit),
-    ...(locationId ? { locationId: String(locationId) } : {}),
+    ...(activeCalendarId ? { calendarId: activeCalendarId } : {}),
   }).toString();
 
   const { data, isLoading, refetch } = useApiQuery(
-    ["Holiday", start, limit, locationId],
+    ["Holiday", activeCalendarId],
     `${API_ENDPOINTS.COMPANY_HOLIDAY}?${holidayQuery}`,
     {
       refetchOnWindowFocus: false,
       retry: 1,
+      enabled: !!activeCalendarId,
     } as const,
   );
 
@@ -156,22 +180,20 @@ export const HolidaysTab: React.FC<{
     if (!name.trim() || !holidayDate) return;
     setLoading(true);
 
-    const normalizedDate = convertDateToISO(holidayDate);
-
     const payload = {
       title: name.trim(),
-      startDate: holidayDate,
-      endDate: holidayDate,
-      type: type,
-      // ...(locationId ? { locationId } : {}),
+      date: holidayDate,
+      durationType,
+      scope,
+      calendarId: activeCalendarId,
     };
 
-    // Create new holiday
     createHoliday.mutate(payload, {
       onSuccess: () => {
         setName("");
         setHolidayDate("");
-        setType(HOLIDAY_SCOPE.PUBLIC);
+        setDurationType(1);
+        setScope(HOLIDAY_SCOPE.PUBLIC);
         refetch();
         setLoading(false);
         setIsDrawerOpen(false);
@@ -262,6 +284,26 @@ export const HolidaysTab: React.FC<{
             </SheetHeader>
             <div className="flex-1 overflow-y-auto px-6 py-5">
               <div className="rounded-xl border bg-white p-4 space-y-4">
+                {calendars.length > 0 && (
+                  <div className="space-y-2">
+                    <Label htmlFor="calendarSelect">Calendar</Label>
+                    <Select
+                      value={selectedCalendarId}
+                      onValueChange={setSelectedCalendarId}
+                    >
+                      <SelectTrigger id="calendarSelect" className="w-full">
+                        <SelectValue placeholder="Select calendar" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {calendars.map((cal: any) => (
+                          <SelectItem key={cal.id} value={cal.id}>
+                            {cal.name || cal.title || cal.id}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="name">Name</Label>
                   <Input
@@ -282,13 +324,29 @@ export const HolidaysTab: React.FC<{
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="type"> Holiday Type</Label>
+                  <Label htmlFor="durationType">Duration Type</Label>
                   <Select
-                    value={String(type)}
-                    onValueChange={(value) => setType(parseInt(value) as HOLIDAY_SCOPE)}
+                    value={String(durationType)}
+                    onValueChange={(value) => setDurationType(parseInt(value))}
                   >
-                    <SelectTrigger id="type" className="w-full">
-                      <SelectValue placeholder="Select type" />
+                    <SelectTrigger id="durationType" className="w-full">
+                      <SelectValue placeholder="Select duration type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">Full Day</SelectItem>
+                      <SelectItem value="2">First Half</SelectItem>
+                      <SelectItem value="3">Second Half</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="scope">Scope</Label>
+                  <Select
+                    value={String(scope)}
+                    onValueChange={(value) => setScope(parseInt(value) as HOLIDAY_SCOPE)}
+                  >
+                    <SelectTrigger id="scope" className="w-full">
+                      <SelectValue placeholder="Select scope" />
                     </SelectTrigger>
                     <SelectContent>
                       {Object.entries(HOLIDAY_SCOPE_LABELS).map(([value, label]) => (
@@ -309,7 +367,7 @@ export const HolidaysTab: React.FC<{
                 <Button
                   type="button"
                   onClick={handleSubmit}
-                  disabled={loading || !name.trim() || !holidayDate}
+                  disabled={loading || !name.trim() || !holidayDate || !durationType || !activeCalendarId}
                 >
                   {loading && <Loader className="animate-spin w-4 h-4 mr-2" />}
                   {loading ? "Submitting..." : "Submit"}
@@ -377,8 +435,15 @@ export const HolidaysTab: React.FC<{
                       <TableCell>{holiday.name || holiday.title}</TableCell>
                       <TableCell>{formatHolidayDate(holiday)}</TableCell>
                       <TableCell>
-                        {HOLIDAY_SCOPE_LABELS[holiday.type as HOLIDAY_SCOPE] ||
-                          "-"}
+                        {holiday.scope
+                          ? HOLIDAY_SCOPE_LABELS[holiday.scope as HOLIDAY_SCOPE] || "-"
+                          : holiday.durationType === 1
+                          ? "Full Day"
+                          : holiday.durationType === 2
+                          ? "First Half"
+                          : holiday.durationType === 3
+                          ? "Second Half"
+                          : "-"}
                       </TableCell>
                       <TableCell>
                         <Badge

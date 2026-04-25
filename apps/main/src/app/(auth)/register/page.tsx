@@ -61,7 +61,7 @@ export default function RegisterPage() {
         <div className="flex lg:w-[58%] flex-col p-6 lg:p-16 justify-center">
           <div className="flex items-center gap-3 mb-8 lg:mb-16">
             <img
-              src="/images/nitro-fms-logo.jpeg"
+              src="/images/nitroberry-logo.png"
               alt="NitroBerry logo"
               className="h-12 w-12 rounded-lg bg-white object-contain shadow-lg shadow-purple-900/40"
             />

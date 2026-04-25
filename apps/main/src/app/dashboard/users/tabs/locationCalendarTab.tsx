@@ -57,14 +57,6 @@ import { CompanyShiftsTab } from "./companyShiftsTab";
 type CalendarViewType = "day" | "week" | "month" | "year";
 type CalendarDetailMode = "overview" | "holidays" | "shifts";
 
-type LocationItem = {
-  id?: string | number;
-  title?: string;
-  name?: string;
-  timeZone?: string;
-  type?: number;
-};
-
 type CalendarEvent = {
   id: string;
   calendarId: string;
@@ -77,7 +69,8 @@ type CalendarEvent = {
 };
 
 type CalendarListItem = {
-  id: string;
+  id: string;         // calendar ID
+  locationId: string; // location ID (needed for shift GET query)
   label: string;
   timezone: string;
   color: string;
@@ -208,31 +201,32 @@ export function LocationCalendarTab() {
   const [shiftRefreshSignal, setShiftRefreshSignal] = useState(0);
 
   const { data, isLoading } = useApiQuery(
-    ["LocationCalendarLocations", 1, 1000],
-    `${API_ENDPOINTS.COMPANY_LOCATION}?start=1&limit=1000`,
+    ["CompanyCalendars"],
+    API_ENDPOINTS.COMPANY_CALENDAR,
     {
       refetchOnWindowFocus: false,
       retry: 1,
     } as const,
   );
 
-  const locations: LocationItem[] = useMemo(() => {
+  const calendarLists = useMemo<CalendarListItem[]>(() => {
     const source = data?.data;
-    if (Array.isArray(source)) return source;
-    if (Array.isArray(source?.locations)) return source.locations;
-    return [];
-  }, [data]);
+    const list: any[] = Array.isArray(source)
+      ? source
+      : Array.isArray(source?.calendars)
+        ? source.calendars
+        : Array.isArray(source?.data)
+          ? source.data
+          : [];
 
-  const calendarLists = useMemo<CalendarListItem[]>(
-    () =>
-      locations.map((location, index) => ({
-        id: String(location.id),
-        label: location.title || location.name || "Unnamed Location",
-        timezone: location.timeZone || "UTC",
-        color: CALENDAR_COLORS[index % CALENDAR_COLORS.length],
-      })),
-    [locations],
-  );
+    return list.map((cal: any, index: number) => ({
+      id: String(cal.id),
+      locationId: String(cal.location?.id || cal.locationId || cal.id),
+      label: cal.name || cal.title || cal.label || "Unnamed Calendar",
+      timezone: cal.timeZone || cal.timezone || "UTC",
+      color: CALENDAR_COLORS[index % CALENDAR_COLORS.length],
+    }));
+  }, [data]);
 
   useEffect(() => {
     if (calendarLists.length === 0) return;
@@ -252,7 +246,7 @@ export function LocationCalendarTab() {
 
   const { data: holidayDetailData } = useApiQuery(
     ["LocationCalendarHolidayDetail", selectedCalendarId],
-    `${API_ENDPOINTS.COMPANY_HOLIDAY}?start=1&limit=20&locationId=${selectedCalendarId}`,
+    `${API_ENDPOINTS.COMPANY_HOLIDAY}?calendarId=${selectedCalendarId}`,
     {
       enabled: Boolean(selectedCalendarId) && isDetailsOpen,
       refetchOnWindowFocus: false,
@@ -260,9 +254,11 @@ export function LocationCalendarTab() {
     } as const,
   );
 
+  const selectedCalendarLocationId = calendarLists.find((c) => c.id === selectedCalendarId)?.locationId || "";
+
   const { data: shiftDetailData } = useApiQuery(
     ["LocationCalendarShiftDetail", selectedCalendarId],
-    `${API_ENDPOINTS.COMPANY_SHIFT}?start=1&limit=20&locationId=${selectedCalendarId}`,
+    `${API_ENDPOINTS.COMPANY_SHIFT}?start=1${selectedCalendarLocationId ? `&locationId=${selectedCalendarLocationId}` : ""}`,
     {
       enabled: Boolean(selectedCalendarId) && isDetailsOpen,
       refetchOnWindowFocus: false,
@@ -725,7 +721,7 @@ export function LocationCalendarTab() {
     );
   }
 
-  if (locations.length === 0) {
+  if (calendarLists.length === 0 && !isLoading) {
     return (
       <div className="flex items-center justify-center py-10">
         <EmptyState
@@ -1042,13 +1038,14 @@ export function LocationCalendarTab() {
                     <HolidaysTab
                       createSignal={holidayCreateSignal}
                       refreshSignal={holidayRefreshSignal}
-                      locationId={selectedCalendarId}
+                      calendarId={selectedCalendarId}
                     />
                   ) : (
                     <CompanyShiftsTab
                       createSignal={shiftCreateSignal}
                       refreshSignal={shiftRefreshSignal}
-                      locationId={selectedCalendarId}
+                      calendarId={selectedCalendarId}
+                      locationId={selectedCalendarLocationId}
                     />
                   )}
                 </>

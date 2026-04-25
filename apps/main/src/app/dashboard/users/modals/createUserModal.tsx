@@ -50,8 +50,13 @@ const CreateUserForm: React.FC<Props> = ({
     ["COMPANY_LOCATION_create_user"],
     `${API_ENDPOINTS.COMPANY_LOCATION}?start=1&limit=1000`,
   );
+  const { data: shiftsData } = useApiQuery(
+    ["COMPANY_SHIFTS_create_user"],
+    `${API_ENDPOINTS.COMPANY_SHIFT}?start=1`,
+  );
   const roles = rolesData?.data?.Roles || rolesData?.data?.roles || [];
   const locations = locationData?.data?.locations || locationData?.data || [];
+  const shifts = shiftsData?.data?.shifts || shiftsData?.data?.Shifts || [];
 
   const toSelectValue = (value: unknown): string => {
     if (value === null || value === undefined) return "";
@@ -254,6 +259,28 @@ const CreateUserForm: React.FC<Props> = ({
               </SelectContent>
             </Select>
             {renderError("departmentId")}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="flex flex-col space-y-2">
+            <Label htmlFor="shiftId">Shift*</Label>
+            <Select
+              value={toSelectValue(formik.values.shiftId)}
+              onValueChange={(val) => formik.setFieldValue("shiftId", val)}
+            >
+              <SelectTrigger id="shiftId" className="w-full">
+                <SelectValue placeholder="Select Shift" />
+              </SelectTrigger>
+              <SelectContent>
+                {shifts.map((shift: any) => (
+                  <SelectItem key={shift.id} value={String(shift.id)}>
+                    {shift.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {renderError("shiftId")}
           </div>
         </div>
 
@@ -472,6 +499,27 @@ const CreateUserForm: React.FC<Props> = ({
           </SelectContent>
         </Select>
         {renderError("locationId")}
+      </div>
+
+      {/* Shift */}
+      <div className="flex flex-col space-y-1">
+        <Label htmlFor="shiftId">Shift*</Label>
+        <Select
+          value={toSelectValue(formik.values.shiftId)}
+          onValueChange={(val) => formik.setFieldValue("shiftId", val)}
+        >
+          <SelectTrigger id="shiftId" className="w-full">
+            <SelectValue placeholder="Select Shift" />
+          </SelectTrigger>
+          <SelectContent>
+            {shifts.map((shift: any) => (
+              <SelectItem key={shift.id} value={String(shift.id)}>
+                {shift.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {renderError("shiftId")}
       </div>
 
       {/* Password Policy */}

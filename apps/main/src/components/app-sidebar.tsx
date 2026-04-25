@@ -2,171 +2,84 @@
 
 import type * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard,
-  Layers,
-  Users,
-  FileText,
-  Bell,
-  MessageSquare,
-  PanelLeftOpen,
-  ChartBar,
-  Calendar,
-  UsersRound,
-  Archive,
-} from "lucide-react";
+import { usePathname, useSearchParams } from "next/navigation";
 
-import { NavUser } from "@/components/nav-user";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarHeader,
-  SidebarRail,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarSeparator,
   SidebarGroup,
-  SidebarTrigger,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarRail,
+  SidebarSeparator,
 } from "@/components/ui/sidebar";
-import { useSession } from "next-auth/react";
-import { RoutesEnum } from "@/lib/enums/routes.enum";
-import { useDashboardMode } from "@/context/dashboard-mode-context";
-import { useApiQuery } from "@/hooks/useApi";
-import { API_ENDPOINTS } from "@/api/endpoints";
+import { cn } from "@/lib/utils";
+import { useProduct } from "@/context/product-context";
 import { usePermissions } from "@/hooks/usePermissions";
-
-const SIDEBAR_BADGE_CLASSNAME =
-  "absolute -top-2.5 -right-2.5 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-semibold leading-none text-white ring-2 ring-[rgb(var(--nav-bg))]";
-
-// Menu arrays
-const myMainMenu = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Workflow", href: RoutesEnum.Workflow, icon: FileText },
-  {
-    name: "Workflow Templates",
-    href: "/dashboard/workflow-templates",
-    icon: Layers,
-  },
-  { name: "Setup", href: "/dashboard/setup", icon: Users },
-  { name: "Reports", href: "/dashboard/reports", icon: FileText },
-  { name: "Task", href: RoutesEnum.TASKS, icon: FileText },
-  { name: "Vault", href: RoutesEnum.VAULT, icon: Archive },
-  { name: "Task Templates", href: "/dashboard/task/template", icon: FileText },
-  { name: "Analytics", href: "/dashboard/analytics", icon: ChartBar },
-  {
-    name: "Social",
-    href: RoutesEnum.SOCIAL_HOME,
-    icon: UsersRound,
-  },
-];
-
-const SETTINGS_HREF = "/dashboard/settings";
-
-const mySecondaryMenu = [
-  { name: "Notifications", href: "/dashboard/notifications", icon: Bell },
-  { name: "Message", href: "/dashboard/messages", icon: MessageSquare },
-];
+import { useSession } from "next-auth/react";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
-  // const isActive = (href: string) =>
-  //   pathname === href || pathname.startsWith(`${href}/`);
-  const { data: notificationCountData } = useApiQuery(
-    ["NOTIFICATION_COUNT"],
-    API_ENDPOINTS.NOTIFICATION_COUNT,
-    {
-      refetchOnWindowFocus: true,
-      refetchOnMount: true,
-      retry: 1,
-    } as const,
-  );
-  const notificationCount = notificationCountData?.data?.notifcation?.total ?? 0;
-  const messageUnreadCount = notificationCountData?.data?.chat?.total ?? 0;
+  const searchParams = useSearchParams();
+  const { activeProduct } = useProduct();
+  const { canAccessMenu, isLoading: permissionsLoading } = usePermissions();
+  const { status: sessionStatus } = useSession();
+
+  const navItems = activeProduct?.nav ?? [];
+
+  const visibleNav = navItems.filter((item) => {
+    if (sessionStatus === "loading" || permissionsLoading) return true;
+    // Strip query string before permission check
+    const hrefPath = item.href.split("?")[0];
+    return canAccessMenu(hrefPath);
+  });
 
   const isActive = (href: string) => {
-    if (
-      href === RoutesEnum.SOCIAL_HOME ||
-      href === RoutesEnum.SOCIAL
-    ) {
-      return pathname.startsWith(`${RoutesEnum.SOCIAL}/`) || pathname === RoutesEnum.SOCIAL;
+    const [hrefPath, hrefQuery] = href.split("?");
+    // If the nav item has a query param (e.g. ?tab=company), match both path + tab
+    if (hrefQuery) {
+      const tabParam = new URLSearchParams(hrefQuery).get("tab");
+      return pathname === hrefPath && searchParams.get("tab") === tabParam;
     }
-    return pathname === href;
+    if (pathname === href) return true;
+    if (href !== "/dashboard" && pathname.startsWith(`${hrefPath}/`)) return true;
+    return false;
   };
-  const { data: session, status: sessionStatus }: any = useSession();
-  const { mode, isAdmin, canAccessCompanyDashboard } = useDashboardMode();
-  const isCompanyView = canAccessCompanyDashboard && mode === "company";
-  const { canAccessMenu, isLoading: permissionsLoading } = usePermissions();
 
-  // Filter menus based on permissions - hide items user doesn't have access to
-  // Always show menus during loading to prevent navigation issues
-  const activeMainMenu = myMainMenu.filter((item) =>
-    sessionStatus === "loading" || permissionsLoading
-      ? true
-      : canAccessMenu(item.href),
-  );
-  const activeSecondaryMenu = mySecondaryMenu.filter((item) =>
-    sessionStatus === "loading" || permissionsLoading
-      ? true
-      : canAccessMenu(item.href),
-  );
-
-  const canNavigateToSettings =
-    sessionStatus === "loading" || permissionsLoading
-      ? true
-      : canAccessMenu(SETTINGS_HREF);
+  if (!activeProduct?.hasSidebar) return null;
 
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <div className="flex items-start justify-between py-2 relative">
-          <Link href="/dashboard" className="flex items-center gap-3">
-            <div className="flex size-12 group-data-[collapsible=icon]:size-8 items-center justify-center rounded-full bg-white/5">
-              <img
-                src="/images/nitro-fms-logo.jpeg"
-                alt="App logo"
-                className="size-12 object-contain"
-              />
-            </div>
-            <div className="group-data-[collapsible=icon]:hidden">
-              <img
-                src="/images/fms-enterprise.svg"
-                alt="App logo"
-                className="h-12 w-full object-contain"
-              />
-            </div>
-          </Link>
-
-          {/* Show when expanded */}
-          <SidebarTrigger className="text-muted-foreground group-data-[collapsible=icon]:hidden" />
-
-          {/* Floating Expand Icon (only visible when collapsed) */}
-          <button
-            type="button"
-            className="
-        hidden group-data-[collapsible=icon]:flex
-        items-center justify-center
-        absolute -right-4 top-0
-        cursor-pointer z-40"
-            onClick={() => {
-              const btn = document.querySelector(
-                "[data-sidebar='trigger']",
-              ) as HTMLElement;
-              btn?.click(); // simulate trigger click
-            }}
-            aria-label="Expand sidebar"
+        {/* Product identity strip */}
+        <div
+          className={cn(
+            "flex items-center gap-3 px-3 py-3",
+            "group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:gap-0",
+          )}
+        >
+          <div
+            className={cn(
+              "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
+              "group-data-[collapsible=icon]:h-7 group-data-[collapsible=icon]:w-7",
+              activeProduct.color,
+            )}
           >
-            <PanelLeftOpen className="w-4 h-5 text-black" />
-          </button>
+            <activeProduct.icon className="h-4 w-4 text-white" />
+          </div>
+          <span className="truncate text-sm font-semibold group-data-[collapsible=icon]:hidden">
+            {activeProduct.name}
+          </span>
         </div>
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup className="p-2 mt-3">
+        <SidebarGroup className="p-2">
           <SidebarMenu className="group-data-[collapsible=icon]:items-center">
-            {activeMainMenu.map((item) => (
+            {visibleNav.map((item) => (
               <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton
                   asChild
@@ -174,7 +87,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   isActive={isActive(item.href)}
                 >
                   <Link href={item.href} className="overflow-visible">
-                    <item.icon className="w-5 h-5" />
+                    <item.icon className="h-4 w-4 shrink-0" />
                     <span className="group-data-[collapsible=icon]:hidden">
                       {item.name}
                     </span>
@@ -184,60 +97,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             ))}
           </SidebarMenu>
         </SidebarGroup>
-
-        {/* rest of your code stays the same... */}
-        <div className="">
-          {/* Secondary menu */}
-          <SidebarGroup className="p-2 pt-3">
-            <SidebarMenu className="group-data-[collapsible=icon]:items-center">
-              {activeSecondaryMenu.map((item) => (
-                <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton
-                    asChild
-                    tooltip={item.name}
-                    isActive={isActive(item.href)}
-                  >
-                    <Link
-                      href={item.href}
-                      className="relative flex items-center overflow-visible"
-                    >
-                      <div className="relative">
-                        <item.icon className="w-4 h-4" />
-                        {item.name === "Notifications" && (
-                          <span className={SIDEBAR_BADGE_CLASSNAME}>
-                            {notificationCount > 99 ? "99+" : notificationCount}
-                          </span>
-                        )}
-                        {item.name === "Message" && (
-                          <span className={SIDEBAR_BADGE_CLASSNAME}>
-                            {messageUnreadCount > 99
-                              ? "99+"
-                              : messageUnreadCount}
-                          </span>
-                        )}
-                      </div>
-                      <span className="group-data-[collapsible=icon]:hidden">
-                        {item.name}
-                      </span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroup>
-        </div>
       </SidebarContent>
-      <SidebarSeparator className="my-2" />
 
-      <SidebarFooter className="mb-3">
-        {session?.user && (
-          <NavUser
-            user={session.user}
-            settingsHref={SETTINGS_HREF}
-            canNavigateToSettings={canNavigateToSettings}
-          />
-        )}
+      <SidebarSeparator className="my-1" />
+
+      <SidebarFooter className="mb-2">
+        {/* Product description (visible when expanded) */}
+        <p className="px-3 text-[11px] leading-snug text-muted-foreground group-data-[collapsible=icon]:hidden">
+          {activeProduct.description}
+        </p>
       </SidebarFooter>
+
       <SidebarRail />
     </Sidebar>
   );

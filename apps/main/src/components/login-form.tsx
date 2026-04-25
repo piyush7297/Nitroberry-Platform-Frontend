@@ -54,7 +54,7 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <div className="flex justify-center">
         <img
-          src="/images/nitro-fms-logo.jpeg"
+          src="/images/nitroberry-logo.png"
           alt="NitroBerry logo"
           className="h-16 w-16 rounded-lg bg-white object-contain shadow-lg"
         />
