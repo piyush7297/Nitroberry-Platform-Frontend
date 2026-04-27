@@ -1,14 +1,7 @@
 "use client";
 
 import React from "react";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@nitroberry/ui";
 
 interface PaginationProps {
   start: number;
