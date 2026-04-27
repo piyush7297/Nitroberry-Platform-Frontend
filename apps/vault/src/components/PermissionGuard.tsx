@@ -103,8 +103,6 @@ export const useModulePermissions = (moduleId: number) => {
     delete: false,
     viewall: false,
   };
-  // If the permissions API errored (e.g. CORS/network), don't block authenticated users.
-  // Access is already enforced server-side by the session check.
-  const hasAccess = error ? true : perms.viewall;
+  const hasAccess = error ? false : perms.viewall;
   return { ...perms, isLoading, hasAccess };
 };

@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialProvider from "next-auth/providers/credentials";
-import { AUTH_TOKEN_KEY } from "@/api/token";
+import { AUTH_TOKEN_KEY } from "@nitroberry/api-client";
 import axios from "axios";
 
 export const authOptions: NextAuthOptions = {

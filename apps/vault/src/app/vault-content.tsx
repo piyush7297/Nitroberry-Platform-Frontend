@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, useRef } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useApiQuery } from "@/hooks/useApi";
 import { useMutation } from "@tanstack/react-query";
-import { apiCall } from "@/api/apiFunction";
+import { apiCall } from "@nitroberry/api-client";
 import { API_ENDPOINTS } from "@/api/endpoints";
 import {
   AlertTriangle,
@@ -63,8 +63,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PermissionDeniedState, useModulePermissions } from "@/components/PermissionGuard";
 import { EmptyState } from "@/components/not-found";
-import { toast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
+import { toast } from "@nitroberry/ui";
+import { cn } from "@nitroberry/shared";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Pagination } from "@/components/pagination";
