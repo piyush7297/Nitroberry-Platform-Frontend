@@ -9,15 +9,8 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/",
-        destination: "/management/company",
+        destination: "/company",
         permanent: false,
-        basePath: false,
-      },
-      {
-        source: "/management",
-        destination: "/management/company",
-        permanent: false,
-        basePath: false,
       },
     ];
   },

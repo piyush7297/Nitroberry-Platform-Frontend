@@ -37,7 +37,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       return pathname === hrefPath && searchParams.get("tab") === tabParam;
     }
     if (pathname === href) return true;
-    if (href !== "/dashboard" && pathname.startsWith(`${hrefPath}/`)) return true;
+    if (href !== "/" && pathname.startsWith(`${hrefPath}/`)) return true;
     return false;
   };
 
