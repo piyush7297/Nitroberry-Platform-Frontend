@@ -235,6 +235,91 @@ importers:
         specifier: ^5
         version: 5.9.3
 
+  apps/management:
+    dependencies:
+      '@nitroberry/api-client':
+        specifier: workspace:*
+        version: link:../../packages/api-client
+      '@nitroberry/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+      '@nitroberry/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      '@tanstack/react-query':
+        specifier: ^5.99.2
+        version: 5.99.2(react@19.1.0)
+      '@tanstack/react-query-devtools':
+        specifier: ^5.90.2
+        version: 5.99.2(@tanstack/react-query@5.99.2(react@19.1.0))(react@19.1.0)
+      '@tanstack/react-table':
+        specifier: ^8.21.3
+        version: 8.21.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      axios:
+        specifier: ^1.12.2
+        version: 1.15.2
+      clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
+      date-fns:
+        specifier: ^4.1.0
+        version: 4.1.0
+      formik:
+        specifier: ^2.4.6
+        version: 2.4.9(@types/react@19.2.14)(react@19.1.0)
+      lucide-react:
+        specifier: ^0.544.0
+        version: 0.544.0(react@19.1.0)
+      next:
+        specifier: 15.5.7
+        version: 15.5.7(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      next-auth:
+        specifier: ^4.24.11
+        version: 4.24.14(next@15.5.7(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      react:
+        specifier: 19.1.0
+        version: 19.1.0
+      react-dom:
+        specifier: 19.1.0
+        version: 19.1.0(react@19.1.0)
+      tailwind-merge:
+        specifier: ^3.3.1
+        version: 3.5.0
+      yup:
+        specifier: ^1.7.1
+        version: 1.7.1
+    devDependencies:
+      '@eslint/eslintrc':
+        specifier: ^3
+        version: 3.3.5
+      '@tailwindcss/postcss':
+        specifier: ^4
+        version: 4.2.4
+      '@types/node':
+        specifier: ^20
+        version: 20.19.39
+      '@types/react':
+        specifier: ^19
+        version: 19.2.14
+      '@types/react-dom':
+        specifier: ^19
+        version: 19.2.3(@types/react@19.2.14)
+      eslint:
+        specifier: ^9
+        version: 9.39.4(jiti@2.6.1)
+      eslint-config-next:
+        specifier: 15.5.3
+        version: 15.5.3(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
+      tailwindcss:
+        specifier: ^4
+        version: 4.2.4
+      tw-animate-css:
+        specifier: ^1.3.8
+        version: 1.4.0
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+
   apps/vault:
     dependencies:
       '@nitroberry/api-client':

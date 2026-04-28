@@ -22,8 +22,12 @@ export type PlatformHeaderUser = {
 };
 
 export type PlatformHeaderProps = {
-  /** ReactNode for the left area — e.g. ProductLauncher + chip in main, BackButton in vault */
+  /** ReactNode for the left area — e.g. chip in main, BackButton in vault */
   leftSlot?: React.ReactNode;
+  /** ReactNode rendered after messages icon — e.g. ProductLauncher */
+  productSwitcher?: React.ReactNode;
+  /** Hide the logo/wordmark (e.g. when logo lives in the sidebar) */
+  hideLogo?: boolean;
   /** Href the logo/brand name links to */
   logoHref?: string;
   /** Absolute src for the logo image — optional. Falls back to styled "N" badge. */
@@ -46,6 +50,8 @@ export type PlatformHeaderProps = {
 
 export function PlatformHeader({
   leftSlot,
+  productSwitcher,
+  hideLogo = false,
   logoHref = "/",
   logoSrc,
   notificationsHref,
@@ -59,37 +65,39 @@ export function PlatformHeader({
   return (
     <header className="sticky top-0 z-40 flex h-12 w-full shrink-0 items-center gap-2 border-b bg-background/95 backdrop-blur-sm px-3">
 
-      {/* Left — logo + leftSlot (product launcher or back button) */}
+      {/* Left — logo (optional) + leftSlot */}
       <div className="flex items-center gap-1.5">
-        <Link
-          href={logoHref}
-          className="flex items-center gap-2 px-1 py-1 rounded-lg hover:bg-accent transition-colors"
-        >
-          {logoSrc ? (
-            <div className="flex h-6 w-6 items-center justify-center rounded bg-[#1a1a2e]">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={logoSrc}
-                alt="NitroBerry"
-                width={20}
-                height={20}
-                className="h-5 w-5 object-contain"
-                onError={(e) => { e.currentTarget.parentElement!.style.display = "none"; }}
-              />
-            </div>
-          ) : (
-            <div className="flex h-6 w-6 items-center justify-center rounded bg-primary text-[11px] font-bold text-primary-foreground">
-              N
-            </div>
-          )}
-          <span className="hidden text-sm font-bold text-foreground sm:block tracking-tight">
-            Nitro<span className="text-primary">Berry</span>
-          </span>
-        </Link>
+        {!hideLogo && (
+          <Link
+            href={logoHref}
+            className="flex items-center gap-2 px-1 py-1 rounded-lg hover:bg-accent transition-colors"
+          >
+            {logoSrc ? (
+              <div className="flex h-6 w-6 items-center justify-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={logoSrc}
+                  alt="NitroBerry"
+                  width={20}
+                  height={20}
+                  className="h-5 w-5 object-contain"
+                  onError={(e) => { e.currentTarget.parentElement!.style.display = "none"; }}
+                />
+              </div>
+            ) : (
+              <div className="flex h-6 w-6 items-center justify-center rounded bg-primary text-[11px] font-bold text-primary-foreground">
+                N
+              </div>
+            )}
+            <span className="hidden text-sm font-bold text-foreground sm:block tracking-tight">
+              Nitro<span className="text-primary">Berry</span>
+            </span>
+          </Link>
+        )}
 
         {leftSlot && (
           <>
-            <span className="mx-0.5 hidden h-4 w-px bg-border sm:block" />
+            {!hideLogo && <span className="mx-0.5 hidden h-4 w-px bg-border sm:block" />}
             {leftSlot}
           </>
         )}
@@ -130,7 +138,9 @@ export function PlatformHeader({
           </Link>
         )}
 
-        {(notificationsHref || messagesHref) && <span className="mx-1.5 h-4 w-px bg-border" />}
+        {productSwitcher && productSwitcher}
+
+        {(notificationsHref || messagesHref || productSwitcher) && <span className="mx-1.5 h-4 w-px bg-border" />}
 
         {user && (
           <DropdownMenu>

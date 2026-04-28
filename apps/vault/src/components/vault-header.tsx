@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { ArrowLeft, Lock } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
-import { PlatformHeader } from "@/components/ui/platform-header";
-import { removeAuthToken } from "@/api/token";
+import { PlatformHeader } from "@nitroberry/ui";
+import { removeAuthToken } from "@nitroberry/api-client";
+import { ProductLauncher } from "@/components/product-launcher";
 
 const MAIN_APP_URL = process.env.NEXT_PUBLIC_MAIN_APP_URL ?? "";
 
@@ -38,6 +39,7 @@ export function VaultHeader() {
       logoHref={`${MAIN_APP_URL}/dashboard`}
       logoSrc={MAIN_APP_URL ? `${MAIN_APP_URL}/images/nitroberry-logo.png` : undefined}
       leftSlot={leftSlot}
+      productSwitcher={<ProductLauncher />}
       notificationsHref={`${MAIN_APP_URL}/dashboard/notifications`}
       messagesHref={`${MAIN_APP_URL}/dashboard/messages`}
       user={user}

@@ -6,7 +6,7 @@ import { authOptions } from "./api/auth/[...nextauth]/route";
 import AuthProvider from "@/context/AuthProvider";
 import TanstackProvider from "@/context/TanstackProvider";
 import { PermissionsProvider } from "@/context/PermissionsContext";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "@nitroberry/ui";
 import { CompanyThemeApplier } from "@/components/company-theme-applier";
 
 const inter = Inter({

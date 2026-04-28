@@ -7,7 +7,8 @@
     "lint": "turbo lint",
     "type-check": "turbo type-check",
     "dev:main": "turbo dev --filter=@nitroberry/main",
-    "dev:vault": "turbo dev --filter=@nitroberry/vault"
+    "dev:vault": "turbo dev --filter=@nitroberry/vault",
+    "dev:management": "turbo dev --filter=@nitroberry/management"
   },
   "devDependencies": {
     "turbo": "^2.5.4"

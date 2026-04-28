@@ -36,7 +36,6 @@ export function GlobalHeader() {
       {activeProduct?.hasSidebar && (
         <SidebarTrigger className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg" />
       )}
-      <ProductLauncher />
       {activeProduct && (
         <div className="hidden sm:flex items-center gap-1.5 rounded-lg px-2 py-1 bg-muted/40 border border-border/50">
           <div className={cn("flex h-4 w-4 items-center justify-center rounded", activeProduct.tileBg)}>
@@ -52,9 +51,9 @@ export function GlobalHeader() {
 
   return (
     <PlatformHeader
-      logoHref="/dashboard"
-      logoSrc="/images/nitroberry-logo.png"
+      hideLogo
       leftSlot={leftSlot}
+      productSwitcher={<ProductLauncher />}
       notificationsHref="/dashboard/notifications"
       messagesHref="/dashboard/messages"
       notificationCount={notificationCount}

@@ -8,7 +8,7 @@ import {
   ToastTitle,
   ToastViewport,
 } from "./toast";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "./use-toast";
 import { CheckCircle2, XCircle } from "lucide-react";
 
 export function Toaster() {
