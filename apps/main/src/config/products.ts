@@ -104,7 +104,9 @@ export const PRODUCTS: Product[] = [
     tileBg: "bg-sky-50",
     textColor: "text-sky-600",
     ringColor: "ring-sky-300",
-    homeHref: "/dashboard/users?tab=company",
+    homeHref: process.env.NEXT_PUBLIC_MANAGEMENT_APP_URL
+      ? `${process.env.NEXT_PUBLIC_MANAGEMENT_APP_URL}/company`
+      : "/dashboard/users?tab=company",
     basePaths: [
       "/dashboard/company",
       "/dashboard/setup",

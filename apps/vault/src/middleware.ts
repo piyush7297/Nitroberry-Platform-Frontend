@@ -2,7 +2,7 @@ import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function middleware(req: NextRequest) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET ?? process.env.NEXT_AUTH_SECRET });
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET ?? process.env.NEXT_AUTH_SECRET, cookieName: "nitroberry.session-token" });
   const isAuth = !!token;
   const isApiRoute = req.nextUrl.pathname.startsWith("/vault/api");
 

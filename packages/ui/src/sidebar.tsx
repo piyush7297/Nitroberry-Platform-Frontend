@@ -273,12 +273,7 @@ function SidebarTrigger({
       }}
       {...props}
     >
-      {/* <PanelLeftIcon /> */}
-      <img
-        src="/images/menu-toggler.svg"
-        alt="Toggle Sidebar"
-        className="size-6"
-      />
+      <PanelLeftIcon />
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   );

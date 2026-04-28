@@ -54,24 +54,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        {/* Product identity strip */}
+        {/* NitroBerry brand */}
         <div
           className={cn(
-            "flex items-center gap-3 px-3 py-3",
+            "flex items-center gap-2.5 px-3 py-3",
             "group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:gap-0",
           )}
         >
-          <div
-            className={cn(
-              "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
-              "group-data-[collapsible=icon]:h-7 group-data-[collapsible=icon]:w-7",
-              activeProduct.color,
-            )}
-          >
-            <activeProduct.icon className="h-4 w-4 text-white" />
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-[#1a1a2e]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/nitroberry-logo.png"
+              alt="NitroBerry"
+              width={20}
+              height={20}
+              className="h-5 w-5 object-contain"
+            />
           </div>
-          <span className="truncate text-sm font-semibold group-data-[collapsible=icon]:hidden">
-            {activeProduct.name}
+          <span className="truncate text-sm font-bold tracking-tight group-data-[collapsible=icon]:hidden">
+            Nitro<span className="text-primary">Berry</span>
           </span>
         </div>
       </SidebarHeader>
